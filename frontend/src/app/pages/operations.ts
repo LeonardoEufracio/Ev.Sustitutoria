@@ -43,12 +43,34 @@ export class Programacion implements OnInit {
   validation(e:any){const errors=e.error?.errors;return errors?Object.values(errors).flat().join(' '):''}
 }
 
-@Component({template:`<div class="title"><div><h1>{{title}}</h1><p>Catálogo operativo</p></div></div><section class="panel"><table><thead><tr>@for(h of headers;track h){<th>{{h}}</th>}</tr></thead><tbody>@for(x of rows;track x.id){<tr>@for(k of keys;track k){<td>{{x[k]}}</td>}</tr>}</tbody></table></section>`})
+@Component({
+  imports:[FormsModule],
+  template:`<div class="title"><div><h1>{{title}}</h1><p>Alta, edición y control de disponibilidad</p></div><button (click)="newItem()">+ Nuevo registro</button></div>
+  @if(message){<p class="notice" [class.error-notice]="error">{{message}}</p>}
+  @if(editing){<form class="panel form" (ngSubmit)="save()">
+    @if(vehicle){
+      <label>Placa<input name="plate" [(ngModel)]="form.plate" maxlength="10" required></label><label>Marca<input name="brand" [(ngModel)]="form.brand" maxlength="80" required></label><label>Modelo<input name="model" [(ngModel)]="form.model" maxlength="80" required></label><label>Año<input type="number" name="year" [(ngModel)]="form.year" min="1980" required></label><label>Capacidad<input type="number" name="capacity" [(ngModel)]="form.passenger_capacity" min="1" required></label><label>Tipo<input name="type" [(ngModel)]="form.vehicle_type" maxlength="50" required></label><label>Estado<select name="status" [(ngModel)]="form.status"><option>Disponible</option><option>Asignado</option><option>En ruta</option><option>Mantenimiento</option><option>Inoperativo</option></select></label>
+    } @else {
+      <label>DNI<input name="dni" [(ngModel)]="form.dni" minlength="8" maxlength="8" required></label><label>Nombre completo<input name="name" [(ngModel)]="form.full_name" maxlength="150" required></label><label>Licencia<input name="license" [(ngModel)]="form.license" maxlength="30" required></label><label>Categoría<input name="category" [(ngModel)]="form.category" maxlength="20" required></label><label>Teléfono<input name="phone" [(ngModel)]="form.phone" maxlength="20" required></label><label>Estado<select name="status" [(ngModel)]="form.status"><option>Disponible</option><option>Ocupado</option><option>Descanso</option></select></label>
+    }
+    <div class="wide actions"><button type="submit">{{form.id?'Guardar cambios':'Crear registro'}}</button><button type="button" class="secondary" (click)="cancel()">Cancelar</button></div>
+  </form>}
+  <section class="panel"><table><thead><tr>@for(h of headers;track h){<th>{{h}}</th>}<th>Acciones</th></tr></thead><tbody>@for(x of rows;track x.id){<tr>@for(k of keys;track k){<td>{{x[k]}}</td>}<td><button class="small-button" (click)="edit(x)">Editar</button></td></tr>}@empty{<tr><td [attr.colspan]="headers.length+1">No hay registros.</td></tr>}</tbody></table></section>`
+})
 export class Catalogo implements OnInit {
-  rows:any[]=[];title='';headers:string[]=[];keys:string[]=[];
+  rows:any[]=[];title='';headers:string[]=[];keys:string[]=[];vehicle=false;editing=false;form:any={};message='';error=false;
   constructor(private api:Api){}
-  ngOnInit(){const vehicle=location.pathname.includes('vehiculos');this.title=vehicle?'Vehículos':'Conductores';this.headers=vehicle?['Placa','Marca','Modelo','Capacidad','Estado']:['DNI','Nombre','Licencia','Categoría','Estado'];this.keys=vehicle?['plate','brand','model','passenger_capacity','status']:['dni','full_name','license','category','status'];this.api.get(vehicle?'/vehiculos':'/conductores').subscribe(x=>this.rows=x)}
+  ngOnInit(){this.vehicle=location.pathname.includes('vehiculos');this.title=this.vehicle?'Vehículos':'Conductores';this.headers=this.vehicle?['Placa','Marca','Modelo','Año','Capacidad','Estado']:['DNI','Nombre','Licencia','Categoría','Estado'];this.keys=this.vehicle?['plate','brand','model','year','passenger_capacity','status']:['dni','full_name','license','category','status'];this.load()}
+  load(){this.api.get(this.vehicle?'/vehiculos':'/conductores').subscribe({next:x=>this.rows=x,error:e=>this.showError(e)})}
+  newItem(){this.form={status:'Disponible'};this.editing=true;this.message='';this.error=false}
+  edit(item:any){this.form={...item};this.editing=true;this.message='';this.error=false}
+  cancel(){this.editing=false;this.form={}}
+  save(){const path=this.vehicle?'/vehiculos':'/conductores';const request=this.form.id?this.api.put(`${path}/${this.form.id}`,this.form):this.api.post(path,this.form);request.subscribe({next:()=>{this.message=this.form.id?'Registro actualizado correctamente.':'Registro creado correctamente.';this.error=false;this.cancel();this.load()},error:e=>this.showError(e)})}
+  showError(e:any){const errors=e.error?.errors;this.message=e.error?.message||(errors?Object.values(errors).flat().join(' '):'No se pudo procesar la operación.');this.error=true}
 }
+
+@Component({imports:[DatePipe],template:`<div class="title"><div><h1>Auditoría</h1><p>Trazabilidad de operaciones críticas</p></div><button (click)="load()">Actualizar</button></div>@if(message){<p class="notice error-notice">{{message}}</p>}<section class="panel"><table><thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Entidad</th><th>ID</th><th>IP</th><th>Detalle</th></tr></thead><tbody>@for(x of rows;track x.id){<tr><td>{{x.created_at|date:'dd/MM/yyyy HH:mm:ss'}}</td><td>{{x.user?.name||'Sistema'}}</td><td><span class="badge">{{x.action}}</span></td><td>{{x.entity}}</td><td>{{x.entity_id||'—'}}</td><td>{{x.ip||'—'}}</td><td><code>{{detail(x.details)}}</code></td></tr>}@empty{<tr><td colspan="7">No hay eventos registrados.</td></tr>}</tbody></table></section>`})
+export class Auditoria implements OnInit {rows:any[]=[];message='';constructor(private api:Api){}ngOnInit(){this.load()}load(){this.message='';this.api.get('/auditoria').subscribe({next:x=>this.rows=x.data,error:e=>this.message=e.error?.message||'No se pudo cargar la auditoría.'})}detail(value:any){if(!value)return '—';const text=JSON.stringify(value);return text.length>100?text.slice(0,97)+'...':text}}
 
 @Component({
   imports:[FormsModule,DatePipe,DecimalPipe],

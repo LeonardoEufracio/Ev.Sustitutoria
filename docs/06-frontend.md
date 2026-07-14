@@ -1,2 +1,2 @@
 # Frontend
-Angular 20 usa componentes standalone, rutas protegidas, interceptor Bearer y servicio API central. El menú cambia por rol. Incluye login, dashboard, solicitudes, bandeja, programación, catálogos y rutas del conductor. La URL del API se centraliza en `src/app/core/api.service.ts`.
+Angular 20 usa componentes standalone, rutas protegidas, interceptor Bearer y servicio API central. El menú cambia por rol. Incluye login, dashboard, solicitudes, bandeja, programación, rutas del conductor, mantenimiento de vehículos y conductores, y consulta administrativa de auditoría. Los catálogos permiten crear y editar registros con validación del API. La URL del API se centraliza en `src/app/core/api.service.ts`.

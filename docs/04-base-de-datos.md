@@ -1,0 +1,2 @@
+# Base de datos
+El script [sqlserver.sql](../database/sqlserver.sql) crea las 15 tablas exigidas, claves foráneas, restricciones de estado, índices de horario, datos iniciales y el trigger que libera el vehículo al retornar. La asignación relaciona solicitud, vehículo y conductor; ruta, comisión, salida, retorno y kilometraje dependen de ella. Auditoría conserva usuario, acción, entidad, detalle e IP.

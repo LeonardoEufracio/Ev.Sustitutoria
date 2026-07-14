@@ -1,0 +1,2 @@
+# Dashboard
+El resumen consume `/api/dashboard/resumen` y presenta solicitudes pendientes/atendidas, vehículos disponibles/en mantenimiento, conductores disponibles, servicios mensuales, promedio diario y kilómetros recorridos. Incluye tablas de atenciones y kilómetros por vehículo, además del total automático de servicios y kilómetros por conductor. Los valores se calculan desde los odómetros almacenados y cambian al finalizar un servicio.

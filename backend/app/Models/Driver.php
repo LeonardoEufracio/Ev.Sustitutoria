@@ -1,0 +1,3 @@
+<?php namespace App\Models;
+use Illuminate\Database\Eloquent\Model;
+class Driver extends Model { protected $fillable=['user_id','dni','full_name','license','category','phone','status']; }
